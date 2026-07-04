@@ -22,11 +22,3 @@ To simplify configuration management, administrators can specify routing rules i
 3. **Resilient Fallback Mode**: If the `GEMINI_API_KEY` is not defined or the network is offline, the pipeline automatically redirects the request to an in-memory regex-based deterministic parser. This guarantees 100% gateway uptime and prevents runtime crashes while preserving structured configuration compilation.
 
 ---
-
-## 2. Development-Time AI Assistance
-
-During the implementation of this assignment, the Google DeepMind coding agent (Antigravity) was used for:
-
-1. **SOLID Refactoring Design**: Pair programmed on isolating routing algorithms into distinct strategy files using the **Strategy Pattern** and registering them via a **Singleton Factory**.
-2. **Downstream Simulator**: Designed high-resolution mock delay wrappers using Promises to validate timeout limits and circuit breaker trips.
-3. **API Validation Tests**: Generated automated script runs to simulate load spikes and sequential Round-Robin loops.
