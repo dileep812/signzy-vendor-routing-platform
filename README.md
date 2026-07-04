@@ -99,6 +99,28 @@ sequenceDiagram
 
 ---
 
+## Explanation of Routing Decisions
+
+The platform uses a two-phase pipeline to decide which vendor receives traffic: **Phase 1: Candidate Filtering** and **Phase 2: Strategy Resolution**.
+
+### 1. Candidate Filtering Pipeline
+When a request arrives, the engine queries all active vendors supporting the requested `capability` and runs them through a sequence of filters. A vendor is skipped if it fails any check:
+- **Circuit Breaker Check**: If the vendor's circuit breaker status is `OPEN`, it is skipped. The status transitions to `OPEN` when a simulated execution times out or fails. A `30-second cooldown` applies, after which the vendor enters a `HALF-OPEN` testing state.
+- **Feature Compatibility Check**: If the client specifies `requiredFeatures` in `requirements`, the vendor is skipped unless its `supportedFeatures` array contains all of them.
+- **Rate Limit Check**: Checks the total requests processed by this vendor in the last 60 seconds (queried from the `RoutingLog` collection). If this count is greater than or equal to the vendor's `rateLimitPerMinute`, it is skipped to avoid rate-limit errors.
+- **Latency Threshold Check**: Computes the rolling average of the vendor's last 20 execution latencies. If this average exceeds the client's `maxLatencyMs` requirement, the vendor is skipped.
+
+*Fallback Rule*: If the pipeline filters out all vendors, **Outage Fallback Mode** activates. The engine bypasses all filters and uses the full candidate list to avoid complete service outage.
+
+### 2. Strategy Resolution Pattern
+Once healthy candidates are filtered, the system dynamically delegates the final selection to one of the interchangeable routing strategies:
+- **Priority Strategy (Default)**: Selects the vendor with the highest priority rank (lowest numeric `priority` value, e.g. 1 is highest priority).
+- **Lowest Cost Strategy**: Sorts the candidates by `costPerRequest` and selects the cheapest.
+- **Lowest Latency Strategy**: Sorts candidates by their rolling average latency and selects the fastest.
+- **Round-Robin Strategy**: Cycles sequentially through the candidates on every request to distribute load evenly, maintaining index offsets in-memory using a Singleton instance map.
+
+---
+
 ## Design Principles: SOLID and KISS
 
 ### SOLID Implementation
