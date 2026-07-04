@@ -11,10 +11,11 @@ In a production environment, this platform operates as a high-throughput API gat
 ### Core Architectural Layers
 
 1. **API Gateway Layer (Express App)**: Serves as the entry point. Parses incoming payloads, maps endpoints, and forwards requests to the controller.
-2. **Controller Layer (Express Controllers)**: Isolates the HTTP request-response cycle from the core routing logic. Validates basic payload syntax and wraps errors.
-3. **Core Orchestration Layer (RouterService)**: Feeds candidates from the database and runs them through a sequential pipeline of health filters (Circuit Breaker, Feature Compatibility, Rate Limit, Latency Limits).
-4. **Strategy Pattern Execution Layer (StrategyFactory & Strategies)**: Resolves the optimal vendor from the list of healthy candidates at runtime using interchangeable sorting strategies (Priority, Cost, Latency, Round-Robin).
-5. **Telemetry & Audit Logging Layer (MongoDB & RoutingLog)**: Tracks execution latencies, status codes, costs, and decisions.
+2. **Global Error Handling Middleware**: Captures exceptions thrown anywhere in the execution stack and maps them to clean, standardized JSON structures and appropriate HTTP status codes.
+3. **Controller Layer (Express Controllers)**: Isolates the HTTP request-response cycle. Uses an `asyncHandler` wrapper to eliminate repetitive try-catch blocks.
+4. **Core Orchestration Layer (RouterService)**: Feeds candidates from the database and runs them through a sequential pipeline of health filters (Circuit Breaker, Feature Compatibility, Rate Limit, Latency Limits).
+5. **Strategy Pattern Execution Layer (StrategyFactory & Strategies)**: Resolves the optimal vendor from the list of healthy candidates at runtime using interchangeable sorting strategies (Priority, Cost, Latency, Round-Robin).
+6. **Telemetry & Audit Logging Layer (MongoDB & RoutingLog)**: Tracks execution latencies, status codes, costs, and decisions.
 
 ---
 
@@ -128,6 +129,7 @@ Once healthy candidates are filtered, the system dynamically delegates the final
 - **Single Responsibility Principle (SRP)**:
   - Models (`Vendor.js`, `RoutingLog.js`) only define Mongoose database schemas.
   - Strategy classes (e.g. `PriorityStrategy.js`) contain only the sorting logic for vendor candidates.
+  - Centralized middleware ([errorHandler.js](file:///d:/PROJECTS/signzy%20vendor%20routing%20platform/middlewares/errorHandler.js)) isolates exception formatting from routing flows.
   - `RouterService.js` coordinates filtering, timing, and log writes.
   - Controllers contain only HTTP bindings.
 - **Open/Closed Principle (OCP)**:
@@ -141,6 +143,7 @@ Once healthy candidates are filtered, the system dynamically delegates the final
 
 ### KISS Implementation (Keep It Simple, Stupid)
 
+- **Centralized Error-Handling Middleware**: Rather than writing repetitive try-catch blocks in every controller method, exceptions are caught globally. An `asyncHandler` wrapper forwards async errors to the global Express error handler, making the codebase DRY and clean.
 - **Stateful Round-Robin**: Instead of maintaining a complex database tracking system or distributed lock structure to count sequential requests, the round-robin counter is managed in-memory using JavaScript `Map` lookups inside a **Singleton** strategy instance.
 - **Dynamic Average Latency**: To prevent calculating average latencies via heavy, database-wide queries on logs, we store a circular rolling array buffer of the last 20 latencies on the vendor document itself, keeping metric reads instantaneous.
 - **Resilient AI Pipeline**: The Agentic AI config parser implements a robust hybrid model. It attempts to call the LLM (`gemini-2.0-flash`), but automatically falls back to a regex-based parser if the API key is not configured or network requests fail, avoiding potential crash states.

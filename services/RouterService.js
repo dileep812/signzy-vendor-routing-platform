@@ -1,6 +1,7 @@
 import { Vendor } from '../models/Vendor.js';
 import { RoutingLog } from '../models/RoutingLog.js';
 import { StrategyFactory } from '../strategies/StrategyFactory.js';
+import { RoutingError } from '../utils/AppError.js';
 
 export class RouterService {
   async processRoutingRequest(capability, payload, requirements) {
@@ -8,7 +9,7 @@ export class RouterService {
     let candidates = await Vendor.find({ capabilities: capability, isActive: true });
 
     if (!candidates.length) {
-      throw new Error(`No active providers registered for capability: ${capability}`);
+      throw new RoutingError(`No active providers registered for capability: ${capability}`);
     }
 
     let skipReasons = [];
@@ -89,7 +90,7 @@ export class RouterService {
       const actualLatency = Date.now() - startTime;
       const errMsg = `Timeout exceeded: mock delay of ${mockDelay}ms is greater than vendor timeout limit of ${chosenVendor.timeoutMs}ms`;
       await this.updateMetricsAndLogs(chosenVendor, actualLatency, finalReason, capability, 'FAILED', errMsg);
-      throw new Error(errMsg);
+      throw new RoutingError(errMsg);
     }
 
     await new Promise(resolve => setTimeout(resolve, mockDelay));
