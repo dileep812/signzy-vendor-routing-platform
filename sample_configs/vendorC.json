@@ -1,0 +1,9 @@
+{
+  "name": "Vendor Gamma",
+  "capabilities": ["PAN_VERIFICATION", "VOTER_ID_VERIFICATION"],
+  "costPerRequest": 1.1,
+  "timeoutMs": 4000,
+  "rateLimitPerMinute": 500,
+  "priority": 3,
+  "supportedFeatures": ["FUZZY_MATCHING"]
+}

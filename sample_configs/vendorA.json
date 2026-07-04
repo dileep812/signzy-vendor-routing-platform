@@ -1,0 +1,9 @@
+{
+  "name": "Vendor Alpha",
+  "capabilities": ["PAN_VERIFICATION", "AADHAAR_VERIFICATION"],
+  "costPerRequest": 1.5,
+  "timeoutMs": 1500,
+  "rateLimitPerMinute": 200,
+  "priority": 1,
+  "supportedFeatures": ["OCR", "LIVE_FACEMATCH", "FUZZY_MATCHING"]
+}

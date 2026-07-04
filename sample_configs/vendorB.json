@@ -1,0 +1,9 @@
+{
+  "name": "Vendor Beta",
+  "capabilities": ["PAN_VERIFICATION"],
+  "costPerRequest": 0.9,
+  "timeoutMs": 2500,
+  "rateLimitPerMinute": 100,
+  "priority": 2,
+  "supportedFeatures": ["OCR"]
+}
